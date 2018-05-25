@@ -1,0 +1,43 @@
+tensorflow实现(in work)：
+保存模型
+tensor board
+AlexNet->VGG->ResNet->Inception->DenseNet
+RNN
+WAVENET
+
+机器学习
+（sklearn）
+1.多元线性回归，岭回归，LASSO，Elastic Net
+
+2.logit regress
+3.SVM,SVR
+4.adabooting
+/gbrt/gbdt/xgboost
+5.decision tree/随机森林
+/extra tree
+6.HMM
+7.EM/GMM/k-means
+8.blending, stacking, bagging
+9.总体流程：数据预处理、
+特征选择
+、降维
+、模型选择
+、调参数、
+判断过拟合还是欠拟合、
+评价指标、
+训练技巧、
+模型速度、
+可移植性
+
+深度学习：
+1.再刷一遍CNN的课
+2.翻译：The History Began from AlexNet: A Comprehensive Survey on Deep Learning Approaches 
+
+普通算法+数据结构（later）：
+1.刷一遍算法课
+2.刷一遍算法书
+3.刷题
+
+C++/Hadoop/SQL：
+C++:刷一遍教材了解一下大概，将来致用而学
+Hadoop/SQL:让LHP入个门

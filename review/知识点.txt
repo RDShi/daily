@@ -1,0 +1,280 @@
+1.CNN:AlexNet->VGG->ResNet->Inception
+2.tfrecord, tensorboard, argparse, tf.saver, os.path, sys 执行命令行, sklearn的指标, numpy
+3.sklearn的算法
+4.hadoop, C++, SQL
+
+===tensorboard===
+pip install tensorboard
+tensorboard --logdir=log的位置
+终端上会显示网址
+
+tf.summary.scalar('mean', mean)
+tf.summary.histogram('histogram', var)#直方图
+tf.summary.distribution#分布图，一般用于显示weights分布
+
+
+	summary_op = tf.summary.merge_all()
+	summary_writer = tf.summary.FileWriter("E:\\File4Work\\DNNFrameWork\\data\\",  flush_secs=60)  
+	summary_writer.add_graph(sess.graph)
+
+        if i%100 == 99:
+            s = sess.run(summary_op)
+            summary_writer.add_summary(s,i)
+            print(sess.run(acc))
+
+
+===tensorflow===
+1.踩到的坑：softmax防止溢出
+
+2.网络模型的保存和读取 不能打开两个tensorflow，不然会报错(requested 50, current size 0)
+
+https://blog.csdn.net/liuxiao214/article/details/79048136
+a.保存模型
+saver = tf.train.Saver(max_to_keep=4)# 首先定义saver类
+with tf.Session() as sess:# 定义会话
+    sess.run(tf.global_variables_initializer())
+    for epoch in range(300):
+        if epoch % 10 == 0:
+            saver.save(sess, "model/my-model", global_step=epoch)# 保存模型
+        sess.run(train_step)# 训练
+创建saver时，可以指定需要存储的tensor，如果没有指定，则全部保存。
+
+创建saver时，可以指定保存的模型个数，利用max_to_keep=4，则最终会保存4个模型（下图中我保存了160、170、180、190step共4个模型）。
+
+saver.save()函数里面可以设定global_step，说明是哪一步保存的模型。
+
+程序结束后，会生成四个文件：存储网络结构.meta、存储训练好的参数.data和.index、记录最新的模型checkpoint。
+b.加载模型
+def load_model():
+    with tf.Session() as sess:
+        saver = tf.train.import_meta_graph('model/my-model-290.meta')
+        saver.restore(sess, tf.train.latest_checkpoint("model/"))
+
+首先import_meta_graph，这里填的名字meta文件的名字。然后restore时，是检查checkpoint，所以只填到checkpoint所在的路径下即可，不需要填checkpoint，不然会报错“ValueError: Can’t load save_path when it is None.”。
+
+c.线性拟合例子
+import tensorflow as tf
+import numpy as np
+
+def train_model():
+
+    # prepare the data
+    x_data = np.random.rand(100).astype(np.float32)
+    y_data = x_data * 0.1 + 0.2
+
+    # define the weights
+    W = tf.Variable(tf.random_uniform([1], -20.0, 20.0), dtype=tf.float32, name='w')
+    b = tf.Variable(tf.random_uniform([1], -10.0, 10.0), dtype=tf.float32, name='b')
+    y = W * x_data + b
+
+    # define the loss
+    loss = tf.reduce_mean(tf.square(y - y_data))
+    train_step = tf.train.GradientDescentOptimizer(0.5).minimize(loss)
+
+    # save model
+    saver = tf.train.Saver(max_to_keep=4)
+
+    with tf.Session() as sess:
+
+        sess.run(tf.global_variables_initializer())
+
+        for epoch in range(300):
+            if epoch % 10 == 0:
+                saver.save(sess, "model/my-model", global_step=epoch)
+            sess.run(train_step)
+
+def load_model():
+    with tf.Session() as sess:
+        saver = tf.train.import_meta_graph('model/my-model-290.meta')
+        saver.restore(sess, tf.train.latest_checkpoint("model/"))
+        print sess.run('w:0')
+        print sess.run('b:0')
+
+train_model()
+load_model()
+
+
+
+===sklearn.metrics===
+print(metrics.classification_report(labels,logitall,target_names=target_names,digits=4))
+计算精确度等值
+
+===sklearn其他===
+https://www.cnblogs.com/CheeseZH/p/5250997.html
+
+===numpy===
+import numpy as np
+存文件: data.tofile("data.bin")
+读文件: data = np.fromfile("data.bin", dtype=int), 会丢失维度信息
+改维度: data.shape = [2,-1]
+变为二进制字符串: data.tostring()
+二进制字符串恢复: np.frombuffer(data.tostring(), int)
+
+===argparse===
+argparse 是 Python 内置的一个用于命令项选项与参数解析的模块，通过在程序中定义好我们需要的参数，argparse 将会从 sys.argv 中解析出这些参数，并自动生成帮助和使用信息。
+
+1.sys.argv: python sys.argv
+eg.
+# arg_sys.py
+import sys
+print "file = ", sys.argv[0]
+for i in range(1, len(sys.argv)):
+    print "parameter%s = %s"%(i, sys.argv[i])
+$ python arg_sys.py 1 2 3
+file = arg_sys.py
+parameter = 1
+parameter = 2
+parameter = 3
+
+2.argparse 使用
+a.创建 ArgumentParser() 对象
+b.调用 add_argument() 方法添加参数
+c.使用 parse_args() 解析添加的参数
+
+import argparse
+parser = argparse.ArgumentParser()#创建解析器
+parser.add_argument('--evalueonly', type=str, help='Directory where to write event logs.', default=0)#添加参数
+parser.parse_args(argv)#解析添加的参数返回对象的属性（eg. a.evalueonly）为设定值
+#help 是-h时的帮助信息
+#--表示可选参数
+
+===importlib===
+Python将importlib作为标准库提供。它旨在提供Pythonimport语法和(__import__()函数)的实现。另外，importlib提供了开发者可以创建自己的对象(即importer)来处理导入过程。
+e.g.
+#foo,py
+def main():
+    print(__name__)
+#importer
+import importlib
+importlib.import_module("foo")
+if __name__ == "__main__":
+    module = dynamic_import('foo')
+    module.main()
+$ python3 importer.py 
+foo
+
+===最长公共===
+1.最长公共子序列（Longest Common Subsequence,LCS）
+递推关系c[i,j]=c[i-1,j-1]+1 if a[i]==a[j] else max(c[i-1,j],c[i,j-1])
+初始值：c[i,0]=0,c[0,j]=0
+2.解最长公共子串
+递推关系c[i,j]=c[i-1,j-1]+1 if a[i]==a[j] else 0
+初始值：c[i,0]=0,c[0,j]=0
+
+===pycharm连接远程服务器===
+Tools=>Deployment=>Configuration 填Connetion和Mappings
+Tools=>Deployment=>Options 修改为ctrl+s同步保存
+File=>Setting=>Project:xxx=>Project Interpreter 点小齿轮然后选择Add Remote 选择SSH Credentials 填写添加解释器
+tools->start ssh session打开服务器的命令行
+
+===tfrecord===
+补充options TFRecordCompressionType.GZIP
+
+TensorFlow程序读取数据一共有3种方法:
+a. Feeding： 在tensorflow程序运行过程中， 用python代码在线提供数据（mnist代码的原理）
+b. Reading： 在一个计算图（tf.graph）的开始前，将文件读入到流（queue）中
+c. loading： 在TensorFlow图中定义常量或变量来保存所有数据(仅适用于数据量比较小的情况)。
+
+import numpy as np
+import tensorflow as tf
+
+#写
+path ="F:\\data\\test\\tmp"
+string = "abcdefghijkl"
+writer = tf.python_io.TFRecordWriter(path)
+for i in range(10):
+    index = i
+    float_i = np.float32(1/(i+1))
+    nparray = np.float32(np.ones([3,3])/(i+1))
+    example = tf.train.Example(features = tf.train.Features(feature = {"index":tf.train.Feature(int64_list=tf.train.Int64List(value=[index])),
+                                                                       "float":tf.train.Feature(float_list=tf.train.FloatList(value=[float_i])),
+                                                                       "data":tf.train.Feature(bytes_list=tf.train.BytesList(value=[nparray.tostring()])),
+                                                                      "str":tf.train.Feature(bytes_list=tf.train.BytesList(value=[bytes(string[:i], "utf8")])),
+                                                                      "var":tf.train.Feature(float_list=tf.train.FloatList(value=np.float32(np.random.rand(i))))}))
+    writer.write(example.SerializeToString())
+writer.close()
+
+#读
+file_queue = tf.train.string_input_producer((path,))
+reader = tf.TFRecordReader()
+file_name, serialized_example = reader.read(file_queue)
+example = tf.parse_single_example(serialized_example, features={"index":tf.FixedLenFeature([],tf.int64),
+                                                                "data": tf.FixedLenFeature([], tf.string),
+                                                               "float":tf.FixedLenFeature([],tf.float32),
+                                                               "str":tf.FixedLenFeature([], tf.string),
+                                                               "var":tf.VarLenFeature(tf.float32)})
+index = tf.cast(example["index"], tf.int64)
+float_i = tf.cast(example["float"], tf.float32)
+str_i = tf.cast(example["str"], tf.string)
+var = tf.cast(example["var"], tf.float32)
+data = tf.decode_raw(example["data"], tf.float32)
+data = tf.reshape(data,shape = [3,3])
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    coord = tf.train.Coordinator()
+    thread = tf.train.start_queue_runners(coord=coord)
+    for i in range(10):
+        print("===")
+        print(sess.run([data,index,float_i,str_i,var]))
+    coord.request_stop()
+    coord.join(thread)
+
+踩过的坑：
+	1.第一次读忘写coord，一直busy但不出结果；
+	2.sess里面不能写data = sess.run(data),不然继续运行data就为会认错，认成后面的data
+	3.最好只写一个sess.run，不然两次run数据不是同组
+
+
+===data set===
+图像数据集：http://blog.csdn.net/qq_14845119/article/details/51913171
+
+===并行===
+https://www.cnblogs.com/lipijin/p/3709903.html
+from multiprocessing import Process
+from threading import Thread
+p = Process/Thread(target=fun, args=(arg1,arg2))
+p.run = r#如果Process没有target,p.start会执行p.run
+p.start()#开启子过程
+p.join()#等待子过程结束
+
+I/O密集型 (CPU-bound)：CPU在等 I/O (硬盘/内存)的读/写，CPU Loading不高。I/O bound的程序一般在达到性能极限时，CPU占用率仍然较低。这可能是因为任务本身需要大量I/O操作，而pipeline做得不是很好，没有充分利用处理器能力
+计算密集型 (CPU-bound) ：大部份时间用来做计算、逻辑判断等CPU动作的程序称之CPU bound。CPU bound的程序一般而言CPU占用率相当高。这可能是因为任务本身不太需要访问I/O设备，也可能是因为程序是多线程实现因此屏蔽掉了等待I/O的时间。
+对于计算密集型任务，用C语言编写效率高。IO密集型任务，C语言替换Python无法提升运行效率。因此对于IO密集型任务，最合适的语言就是开发效率高（代码量少）的语言，脚本语言是首选，C语言最差。
+计算密集型程序适合C语言进程程，I/O密集型适合脚本语言开发的多线程。
+
+===mnist===
+##（is deprecated and will be removed in a future version）
+from tensorflow.contrib.learn.python.learn.datasets.mnist import read_data_sets
+mnist = read_data_sets('MNIST_data', one_hot=True)
+batch = mnist.train.next_batch(50) # 训练集
+feed_dict={x: batch[0], y_: batch[1]}
+feed_dict={x: mnist.test.images, y_: mnist.test.labels} # 测试集
+
+===总体进程===
+库：
+	tensorflow
+	scikit-learn
+	numpy
+
+学术类：
+	毕业论文
+	色噪声
+	Reset
+
+语言类
+	linux
+	C++
+	Python
+
+扩展
+	（SQL）
+	Hadoop
+
+
+
+
+
+
+
+
+

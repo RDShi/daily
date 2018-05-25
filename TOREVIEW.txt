@@ -1,0 +1,8 @@
+jupyter：
+快捷键
+git上查看的技巧
+服务器连接
+%migic命令
+
+linux：
+高频命令
