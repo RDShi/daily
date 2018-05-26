@@ -1,3 +1,3 @@
 # Daily include doing, planning and done
 ## pipeline:
-TODO $\Longrightarrow$ TOREVIEW $\Longrightarrow$ DONE $\Longrightarrow$ Blog or GitHub
+TODO -> TOREVIEW -> DONE -> Blog or GitHub
